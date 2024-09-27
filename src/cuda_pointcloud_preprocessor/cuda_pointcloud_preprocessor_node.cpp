@@ -3,6 +3,7 @@
 
 #include "cuda_pointcloud_preprocessor/point_types.hpp"
 
+#include <cuda_blackboard/cuda_pointcloud2.hpp>
 #include <nebula_common/point_types.hpp>  // needed during development to make sure we use the correct type. This should be removed in the future
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -12,6 +13,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <memory>
+#include <utility>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -242,7 +246,9 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
   output_pointcloud_ptr->header.frame_id = base_frame_;
 
   // Publish
-  pub_->publish(std::move(output_pointcloud_ptr));
+  std::unique_ptr<const cuda_blackboard::CudaPointCloud2> const_ptr =
+    std::move(output_pointcloud_ptr);
+  pub_->publish(std::move(const_ptr));
 
   if (debug_publisher_) {
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);

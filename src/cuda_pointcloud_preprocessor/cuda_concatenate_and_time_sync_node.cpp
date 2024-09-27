@@ -2,6 +2,7 @@
 
 #include "cuda_pointcloud_preprocessor/cuda_concatenate_and_time_sync_node.hpp"
 
+#include <cuda_blackboard/cuda_pointcloud2.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -387,7 +388,8 @@ void CudaPointCloudConcatenateAndSyncNode::publish()
     concatenated_pointcloud_msg_ptr &&
     concatenated_pointcloud_msg_ptr->height * concatenated_pointcloud_msg_ptr->width > 0) {
     pointcloud_stamp = concatenated_pointcloud_msg_ptr->header.stamp;
-    pub_output_->publish(std::move(concatenated_pointcloud_msg_ptr));
+    std::unique_ptr<const cuda_blackboard::CudaPointCloud2> const_msg_ptr = std::move(concatenated_pointcloud_msg_ptr);
+    pub_output_->publish(std::move(const_msg_ptr));
 
     const double publisher_latency_ms =
       (rclcpp::Time(this->get_clock()->now()).seconds() - newest_stamp_) * 1e3;
